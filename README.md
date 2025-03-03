@@ -104,6 +104,23 @@ To create a response body in the given format:
 FooBody.of(foo);
 ```
 
+### Wildcards
+Using the ``*`` symbol for any part of an endpoint path marks that part as a wildcard. For example,
+with the following code:
+```java
+class WildcardEndpoints implements Endpoints {
+
+    @Get("/sample/*/and/*")
+    Response sample(Request request) {
+        List<String> params = request.pathParameters();
+        String text = params.get(0) + " and " + params.get(1);
+        return Response.of(Body.text(text));
+    }
+
+}
+```
+The path ``/sample/foo/and/bar`` would serve the text ``foo and bar``.
+
 ## License
 ```text
 Copyright 2025 Wasabi Codes
