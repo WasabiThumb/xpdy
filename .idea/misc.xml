@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="EntryPointsManager">
+    <writeAnnotations>
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.methods.Delete" />
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.methods.Get" />
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.methods.Patch" />
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.methods.Post" />
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.methods.Put" />
+      <writeAnnotation name="io.github.wasabithumb.xpdy.endpoint.EndpointInject" />
+    </writeAnnotations>
+  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
