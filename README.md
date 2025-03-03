@@ -22,7 +22,7 @@ dependencies {
 <dependencies>
     <dependency>
         <groupId>io.github.wasabithumb</groupId>
-        <artifactId>xpdy-format-json</artifactId>
+        <artifactId>xpdy</artifactId>
         <version>0.1.0</version>
         <scope>compile</scope>
     </dependency>
