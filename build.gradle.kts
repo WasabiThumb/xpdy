@@ -9,7 +9,7 @@ plugins {
 
 description = "Simple annotation-powered web app engine for Java"
 group = "io.github.wasabithumb"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
