@@ -5,10 +5,8 @@ import io.github.wasabithumb.xpdy.endpoint.Endpoints;
 import io.github.wasabithumb.xpdy.except.handling.ExceptionHandler;
 import io.github.wasabithumb.xpdy.logging.XpdyLogger;
 import io.github.wasabithumb.xpdy.misc.MimeType;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
+import io.github.wasabithumb.xpdy.nd.StaticContent;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -16,6 +14,14 @@ import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 public interface XpdyServer {
+
+    /**
+     * Reports the loaded version string in the form {@code major.minor.patch}
+     * @since 0.2.0
+     */
+    static @NotNull String version() {
+        return XpdyServerImpl.VERSION;
+    }
 
     /**
      * Starts building a server instance.
@@ -166,6 +172,14 @@ public interface XpdyServer {
          */
         @Contract("_ -> this")
         @NotNull Builder executor(@Nullable Executor executor);
+
+        /**
+         * Sets the {@link StaticContent static content} to serve at the root path.
+         * @since 0.2.0
+         */
+        @ApiStatus.AvailableSince("0.2.0")
+        @Contract("_ -> this")
+        @NotNull Builder staticContent(@NotNull StaticContent staticContent);
 
         /**
          * Builds a server instance.

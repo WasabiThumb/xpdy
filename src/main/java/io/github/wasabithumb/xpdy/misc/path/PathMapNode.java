@@ -40,22 +40,25 @@ final class PathMapNode<T> {
 
     //
 
+    private final boolean allowWildcard;
     private T identity;
     private int capacity;
     private int length;
     private Object[] children;
 
     PathMapNode(
-            int capacity
+            int capacity,
+            boolean allowWildcard
     ) {
+        this.allowWildcard = allowWildcard;
         this.identity = null;
         this.capacity = capacity;
         this.length = 0;
         this.children = new Object[capacity];
     }
 
-    PathMapNode() {
-        this(8);
+    PathMapNode(boolean allowWildcard) {
+        this(8, allowWildcard);
     }
 
     //
@@ -63,6 +66,15 @@ final class PathMapNode<T> {
     @SuppressWarnings("unchecked")
     private @NotNull Entry<T> child(int index) {
         return (Entry<T>) this.children[index];
+    }
+
+    public @Nullable PathMapNode<T> sub(@NotNull CharSequence name) {
+        Entry<T> child;
+        for (int i=0; i < this.length; i++) {
+            child = this.child(i);
+            if (cmp(name, child.label) == 0) return child.node;
+        }
+        return null;
     }
 
     public int size() {
@@ -81,7 +93,7 @@ final class PathMapNode<T> {
         PathMapNode<T> wildcard = null;
         for (int i=0; i < this.length; i++) {
             child = this.child(i);
-            if (child.label.equals("*")) {
+            if (this.allowWildcard && child.label.equals("*")) {
                 wildcard = child.node;
             } else if (cmp(next, child.label) == 0) {
                 return child.node.get(path, params);
@@ -114,7 +126,7 @@ final class PathMapNode<T> {
 
         child = new Entry<>(
                 next.toString(),
-                new PathMapNode<>()
+                new PathMapNode<>(this.allowWildcard)
         );
         this.insert(child);
         child.node.put(path, value);
@@ -155,6 +167,29 @@ final class PathMapNode<T> {
             sb.setLength(prefixLen);
             sb.append(child.label).append('/');
             child.node.keys0(sb, out);
+        }
+    }
+
+    public @NotNull @Unmodifiable List<T> values(boolean deep) {
+        List<T> ret;
+        if (deep) {
+            ret = new ArrayList<>(this.size());
+            this.values0(ret);
+        } else {
+            ret = new ArrayList<>(this.length);
+            T next;
+            for (int i=0; i < this.length; i++) {
+                next = this.child(i).node.identity;
+                if (next != null) ret.add(next);
+            }
+        }
+        return Collections.unmodifiableList(ret);
+    }
+
+    private void values0(@NotNull List<T> out) {
+        if (this.identity != null) out.add(this.identity);
+        for (int i=0; i < this.length; i++) {
+            this.child(i).node.values0(out);
         }
     }
 

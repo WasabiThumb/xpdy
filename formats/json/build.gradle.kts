@@ -1,5 +1,5 @@
 plugins {
-    id("java")
+    id("java-library")
     id("maven-publish")
     id("signing")
     id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
@@ -26,7 +26,7 @@ java {
 dependencies {
     implementation(rootProject)
     implementation("org.jetbrains:annotations:26.0.2")
-    implementation("com.google.code.gson:gson:2.12.1")
+    api("com.google.code.gson:gson:2.12.1")
 }
 
 tasks.compileJava {

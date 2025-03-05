@@ -6,14 +6,14 @@ Simple annotation-powered web app engine for Java
 #### Gradle (Kotlin)
 ```kotlin
 dependencies {
-    implementation("io.github.wasabithumb:xpdy:0.1.0")
+    implementation("io.github.wasabithumb:xpdy:0.2.0")
 }
 ```
 
 #### Gradle (Groovy)
 ```groovy
 dependencies {
-    implementation 'io.github.wasabithumb:xpdy:0.1.0'
+    implementation 'io.github.wasabithumb:xpdy:0.2.0'
 }
 ```
 
@@ -23,7 +23,7 @@ dependencies {
     <dependency>
         <groupId>io.github.wasabithumb</groupId>
         <artifactId>xpdy</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
         <scope>compile</scope>
     </dependency>
 </dependencies>
@@ -120,6 +120,12 @@ class WildcardEndpoints implements Endpoints {
 }
 ```
 The path ``/sample/foo/and/bar`` would serve the text ``foo and bar``.
+
+### Static Serve
+Since ``0.2.0``, the server builder has supported the ``staticContent`` method, which accepts an instance of
+``StaticContent`` to serve static content. For instance, if you have a "www" directory containing an index.html
+in your project's resources, you can provide ``StaticContent.resources("www")`` and the index.html will be served
+at ``/``.
 
 ## License
 ```text

@@ -1,6 +1,7 @@
 package io.github.wasabithumb.xpdy;
 
 import io.github.wasabithumb.xpdy.logging.XpdyLogger;
+import io.github.wasabithumb.xpdy.nd.StaticContent;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,7 +14,9 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -28,6 +31,7 @@ class XpdyServerTest {
         XpdyServer server = XpdyServer.builder()
                 .port(9739)
                 .logger(XpdyLogger.simple())
+                .staticContent(StaticContent.resources("www"))
                 .inject(Instant.class, Instant.now())
                 .build();
 
@@ -43,6 +47,23 @@ class XpdyServerTest {
     }
 
     //
+
+    @Test
+    void www() throws IOException {
+        HttpURLConnection connection = this.open("/");
+        String index = this.readText(connection);
+        assertEquals("<h1>Hello world!</h1>", index);
+    }
+
+    @Test
+    void sample1() throws IOException {
+        this.testSample(1);
+    }
+
+    @Test
+    void sample2() throws IOException {
+        this.testSample(2);
+    }
 
     @Test
     void uptime() throws IOException {
@@ -152,6 +173,23 @@ class XpdyServerTest {
             }
         }
         return new String(chars);
+    }
+
+    private void testSample(int i) throws IOException {
+        MessageDigest md = assertDoesNotThrow(() -> MessageDigest.getInstance("SHA-1"));
+        HttpURLConnection c1 = this.open("/samples/" + i + ".bin");
+        try (InputStream is = c1.getInputStream()) {
+            byte[] buf = new byte[512];
+            int read;
+            while ((read = is.read(buf)) != -1)
+                md.update(buf, 0, read);
+        }
+        String digest = HexFormat.of().formatHex(md.digest());
+
+        HttpURLConnection c2 = this.open("/samples/" + i + ".bin.sha1");
+        String storedDigest = this.readText(c2);
+
+        assertEquals(storedDigest, digest);
     }
 
 }

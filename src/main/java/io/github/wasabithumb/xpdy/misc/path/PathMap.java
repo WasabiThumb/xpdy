@@ -5,8 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.nio.CharBuffer;
 import java.util.*;
+
+import static io.github.wasabithumb.xpdy.misc.path.PathUtil.split;
 
 /**
  * An intrinsically sorted map where the keys are URI paths.
@@ -15,42 +16,48 @@ import java.util.*;
 @ApiStatus.Internal
 public final class PathMap<T> {
 
-    private final PathMapNode<T> root = new PathMapNode<>();
+    private final PathMapNode<T> root;
+
+    private PathMap(@NotNull PathMapNode<T> root) {
+        this.root = root;
+    }
+
+    @ApiStatus.AvailableSince("0.2.0")
+    public PathMap(boolean allowWildcard) {
+        this(new PathMapNode<>(allowWildcard));
+    }
+
+    public PathMap() {
+        this(true);
+    }
 
     //
-
-    private @NotNull Queue<CharSequence> split(@NotNull CharSequence path) {
-        CharBuffer cb = CharBuffer.wrap(path);
-        LinkedList<CharSequence> ret = new LinkedList<>();
-
-        int len = cb.length();
-        int start = 0;
-        for (int i=0; i < len; i++) {
-            if (cb.charAt(i) != '/') continue;
-
-            int a = start;
-            start = i + 1;
-
-            if (i != a) {
-                ret.add(cb.subSequence(a, i));
-            }
-        }
-
-        if (start != len) {
-            ret.add(cb.subSequence(start, len));
-        }
-
-        return ret;
-    }
 
     public @NotNull @Unmodifiable List<String> keys() {
         return this.root.keys();
     }
 
+    @ApiStatus.AvailableSince("0.2.0")
+    public @NotNull @Unmodifiable List<T> values(boolean deep) {
+        return this.root.values(deep);
+    }
+
+    @ApiStatus.AvailableSince("0.2.0")
+    public @NotNull PathMap<T> sub(@NotNull CharSequence path) throws IllegalArgumentException {
+        PathMapNode<T> head = this.root;
+        for (CharSequence part : split(path)) {
+            head = head.sub(part);
+            if (head == null) {
+                throw new IllegalArgumentException("Path \"" + path + "\" does not exist in map");
+            }
+        }
+        return new PathMap<>(head);
+    }
+
     public @Nullable Resolution<T> resolve(@NotNull CharSequence path) {
         LinkedList<CharSequence> params = new LinkedList<>();
 
-        T out = this.root.get(this.split(path), params);
+        T out = this.root.get(split(path), params);
         if (out == null) return null;
 
         List<String> params2;
@@ -65,11 +72,11 @@ public final class PathMap<T> {
     }
 
     public @Nullable T get(@NotNull CharSequence path) {
-        return this.root.get(this.split(path), null);
+        return this.root.get(split(path), null);
     }
 
     public void put(@NotNull CharSequence path, @NotNull T value) {
-        this.root.put(this.split(path), value);
+        this.root.put(split(path), value);
     }
 
     //

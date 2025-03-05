@@ -2,6 +2,7 @@ package io.github.wasabithumb.xpdy.payload.body;
 
 import com.sun.net.httpserver.HttpExchange;
 import io.github.wasabithumb.xpdy.except.BodyFormatException;
+import io.github.wasabithumb.xpdy.misc.MimeUtil;
 import io.github.wasabithumb.xpdy.misc.io.IOConsumer;
 import io.github.wasabithumb.xpdy.misc.io.IOSupplier;
 import io.github.wasabithumb.xpdy.misc.MimeType;
@@ -46,11 +47,8 @@ public interface Body {
                 .size(Files.size(file));
 
         //noinspection PatternValidation
-        String type = Files.probeContentType(file);
-        if (type != null) {
-            //noinspection PatternValidation
-            b.type(type);
-        }
+        String type = MimeUtil.detect(file);
+        if (type != null) b.type(type);
 
         return b.build();
     }

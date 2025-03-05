@@ -9,7 +9,7 @@ plugins {
 
 description = "Simple annotation-powered web app engine for Java"
 group = "io.github.wasabithumb"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -27,7 +27,6 @@ java {
 
 dependencies {
     implementation("org.jetbrains:annotations:26.0.2")
-    implementation("com.google.code.gson:gson:2.12.1")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }

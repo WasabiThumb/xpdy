@@ -8,6 +8,7 @@ import io.github.wasabithumb.xpdy.except.handling.ExceptionHandler;
 import io.github.wasabithumb.xpdy.logging.XpdyLogger;
 import io.github.wasabithumb.xpdy.misc.MimeType;
 import io.github.wasabithumb.xpdy.misc.MimeTypes;
+import io.github.wasabithumb.xpdy.nd.StaticContent;
 import io.github.wasabithumb.xpdy.payload.body.Body;
 import io.github.wasabithumb.xpdy.payload.request.Request;
 import io.github.wasabithumb.xpdy.payload.response.Response;
@@ -24,8 +25,9 @@ import java.util.concurrent.Executor;
 @ApiStatus.Internal
 final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
 
-    private static final String IDENTIFIER = "xpdy/" +
-            Objects.requireNonNullElse(XpdyBuildInfo.get("Version"), "unknown") +
+    static final String VERSION = Objects.requireNonNullElse(XpdyBuildInfo.get("Version"), "unknown");
+    static final String IDENTIFIER = "xpdy/" +
+            VERSION +
             " (" + System.getProperty("os.name") + ")";
 
     //
@@ -33,6 +35,7 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
     private final InetSocketAddress address;
     private final String name;
     private final EndpointInjector injector;
+    private final StaticContent staticContent;
     private final HttpsConfigurator httpsConfigurator;
     private final Executor executor;
     private HttpServer handle = null;
@@ -41,6 +44,7 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
             @NotNull InetSocketAddress address,
             @NotNull String name,
             @NotNull EndpointInjector injector,
+            @NotNull StaticContent staticContent,
             @NotNull XpdyLogger logger,
             @NotNull @MimeType String defaultIn,
             @NotNull @MimeType String defaultOut,
@@ -52,6 +56,7 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
         this.address = address;
         this.name = name;
         this.injector = injector;
+        this.staticContent = staticContent;
         this.httpsConfigurator = httpsConfigurator;
         this.executor = executor;
     }
@@ -95,11 +100,17 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
     }
 
     private void handle(@NotNull HttpExchange exchange) throws IOException {
-        Response response = this.invokeEndpoint(
-                exchange.getRequestMethod(),
-                exchange.getRequestURI().getPath(),
-                (List<String> params) -> Request.of(exchange, params)
-        );
+        String method = exchange.getRequestMethod();
+        String path = exchange.getRequestURI().getPath();
+
+        Response response = this.invokeStatic(method, path);
+        if (response == null) {
+            response = this.invokeEndpoint(
+                    exchange.getRequestMethod(),
+                    path,
+                    (List<String> params) -> Request.of(exchange, params)
+            );
+        }
 
         Headers headers = exchange.getResponseHeaders();
         headers.set("Server", this.name);
@@ -118,6 +129,32 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
         }
     }
 
+    private @Nullable Response invokeStatic(@NotNull String method, @NotNull String path) throws IOException {
+        Body body;
+        try {
+            //noinspection PatternValidation
+            body = this.staticContent.serve(path);
+        } catch (IOException e) {
+            return Response.error(502);
+        }
+        if (body == null) return null;
+
+        if (method.equalsIgnoreCase("HEAD") || method.equalsIgnoreCase("OPTIONS")) {
+            body.pipe(OutputStream.nullOutputStream());
+            return Response.builder()
+                    .code(204)
+                    .setHeader("Allow", "GET, HEAD, OPTIONS")
+                    .setHeader("Content-Type", body.type())
+                    .setHeader("Content-Length", Long.toString(body.size()))
+                    .build();
+        } else if (!method.equalsIgnoreCase("GET")) {
+            body.pipe(OutputStream.nullOutputStream());
+            return Response.error(405);
+        }
+
+        return Response.of(body);
+    }
+
     //
 
     public static final class Builder implements XpdyServer.Builder {
@@ -130,6 +167,7 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
         private String            defaultIn         = MimeTypes.URLENCODED;
         private String            defaultOut        = MimeTypes.HTML;
         private EndpointInjector  injector          = new EndpointInjector();
+        private StaticContent     staticContent     = StaticContent.empty();
         private ExceptionHandler  exceptionHandler  = ExceptionHandler.DEFAULT;
         private HttpsConfigurator httpsConfigurator = null;
         private Executor          executor          = null;
@@ -228,6 +266,14 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
             return this;
         }
 
+        @Override
+        @Contract("_ -> this")
+        public @NotNull XpdyServer.Builder staticContent(@NotNull StaticContent staticContent) {
+            this.checkOpen();
+            this.staticContent = staticContent;
+            return this;
+        }
+
         //
 
         @Override
@@ -238,6 +284,7 @@ final class XpdyServerImpl extends EndpointRegistry implements XpdyServer {
                     new InetSocketAddress(this.address, this.port),
                     this.name,
                     this.injector,
+                    this.staticContent,
                     this.logger,
                     this.defaultIn,
                     this.defaultOut,
