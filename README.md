@@ -6,14 +6,14 @@ Simple annotation-powered web app engine for Java
 #### Gradle (Kotlin)
 ```kotlin
 dependencies {
-    implementation("io.github.wasabithumb:xpdy:0.2.0")
+    implementation("io.github.wasabithumb:xpdy:0.2.1")
 }
 ```
 
 #### Gradle (Groovy)
 ```groovy
 dependencies {
-    implementation 'io.github.wasabithumb:xpdy:0.2.0'
+    implementation 'io.github.wasabithumb:xpdy:0.2.1'
 }
 ```
 
@@ -23,7 +23,7 @@ dependencies {
     <dependency>
         <groupId>io.github.wasabithumb</groupId>
         <artifactId>xpdy</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1</version>
         <scope>compile</scope>
     </dependency>
 </dependencies>
@@ -122,10 +122,15 @@ class WildcardEndpoints implements Endpoints {
 The path ``/sample/foo/and/bar`` would serve the text ``foo and bar``.
 
 ### Static Serve
-Since ``0.2.0``, the server builder has supported the ``staticContent`` method, which accepts an instance of
-``StaticContent`` to serve static content. For instance, if you have a "www" directory containing an index.html
-in your project's resources, you can provide ``StaticContent.resources("www")`` and the index.html will be served
-at ``/``.
+``StaticContent`` can be used to serve static content. For instance, if you have a "www" directory containing an index.html
+in your project's resources, you can provide ``StaticContent.resources("www")`` to the server
+builder and the file will be served at ``/``. Static paths take priority over endpoints.
+
+#### Content Type Detection
+When serving static content, [content types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) are
+inferred on a best-effort basis. This helps browsers format served content correctly. Common types such as HTML, CSS, JS 
+and media likely will be inferred without issue. If you experience issues with incorrect types, try adding
+[Apache Tika](https://tika.apache.org/) to the classpath.
 
 ## License
 ```text

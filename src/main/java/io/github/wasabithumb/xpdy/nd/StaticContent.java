@@ -124,7 +124,7 @@ public interface StaticContent {
             try {
                 p = Path.of(cls.getProtectionDomain().getCodeSource().getLocation().toURI());
             } catch (URISyntaxException | IllegalArgumentException | SecurityException | NullPointerException e) {
-                throw new IllegalStateException("Failed to idenitfy code source of class " + cls.getName(), e);
+                throw new IllegalStateException("Failed to identify code source of class " + cls.getName(), e);
             }
             if (Files.isDirectory(p)) {
                 return filesystem(p);

@@ -1,7 +1,6 @@
 package io.github.wasabithumb.xpdy.nd;
 
 import io.github.wasabithumb.xpdy.misc.MimeTypes;
-import io.github.wasabithumb.xpdy.misc.MimeUtil;
 import io.github.wasabithumb.xpdy.misc.io.IOSupplier;
 import io.github.wasabithumb.xpdy.misc.path.PathMap;
 import io.github.wasabithumb.xpdy.payload.body.Body;
@@ -81,13 +80,21 @@ final class ZipStaticContent implements StaticContent {
 
     @SuppressWarnings("PatternValidation")
     private @NotNull Body createBody(@NotNull ZipEntry ze) {
-        if (ze.isDirectory()) throw new IllegalArgumentException();
-        IOSupplier<InputStream> reader = this.createReader(ze.getName());
+        String name = ze.getName();
+        int len = name.length();
+        if (len == 0 || name.charAt(len - 1) == '/')
+            throw new IllegalArgumentException("Entry is invalid or directory");
+
+        IOSupplier<InputStream> reader = this.createReader(name);
+
+        int sep = name.lastIndexOf('/');
+        if (sep != -1) name = name.substring(sep + 1);
+        String type = MimeTypes.infer(name, reader, MimeTypes.BYTES);
 
         return Body.builder()
                 .source(reader)
                 .size(ze.getSize())
-                .type(MimeUtil.detectElse(reader, MimeTypes.BYTES))
+                .type(type)
                 .build();
     }
 

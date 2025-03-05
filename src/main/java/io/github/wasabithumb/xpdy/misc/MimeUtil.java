@@ -29,16 +29,19 @@ public final class MimeUtil {
     private static final Object TIKA;
     private static final Method TIKA_DETECT_PATH;
     private static final Method TIKA_DETECT_STREAM;
+    private static final Method TIKA_DETECT_STRING;
     static {
         boolean useTika = false;
         Object tika = null;
         Method tikaDetectPath = null;
         Method tikaDetectStream = null;
+        Method tikaDetectString = null;
         try {
             Class<?> cTika = Class.forName("org.apache.tika.Tika");
             tika = cTika.getConstructor().newInstance();
             tikaDetectPath = cTika.getMethod("detect", Path.class);
             tikaDetectStream = cTika.getMethod("detect", InputStream.class);
+            tikaDetectString = cTika.getMethod("detect", String.class);
             useTika = true;
         } catch (ReflectiveOperationException | SecurityException ignored) {
         } finally {
@@ -46,10 +49,30 @@ public final class MimeUtil {
             TIKA = tika;
             TIKA_DETECT_PATH = tikaDetectPath;
             TIKA_DETECT_STREAM = tikaDetectStream;
+            TIKA_DETECT_STRING = tikaDetectString;
         }
     }
 
     //
+
+    /** @since 0.2.1 */
+    public static @Nullable @MimeType String detect(@NotNull String fileName) {
+        if (USE_TIKA) {
+            Object out;
+            try {
+                out = TIKA_DETECT_STRING.invoke(TIKA, fileName);
+            } catch (ReflectiveOperationException e) {
+                try {
+                    rethrow(e);
+                } catch (IOException e1) {
+                    throw new AssertionError("Unexpected I/O error", e1);
+                }
+                return null;
+            }
+            if (out != null) return (String) out;
+        }
+        return URLConnection.guessContentTypeFromName(fileName);
+    }
 
     public static @Nullable @MimeType String detect(@NotNull Path path) throws IOException {
         if (USE_TIKA) {
@@ -60,9 +83,7 @@ public final class MimeUtil {
                 rethrow(e);
                 return null;
             }
-            if (out != null) {
-                return (String) out;
-            }
+            if (out != null) return (String) out;
         }
         return Files.probeContentType(path);
     }
@@ -76,22 +97,9 @@ public final class MimeUtil {
                 rethrow(e);
                 return null;
             }
-            if (out != null) {
-                return (String) out;
-            }
+            if (out != null) return (String) out;
         }
         return URLConnection.guessContentTypeFromStream(new BufferedInputStream(stream));
-    }
-
-    public static @NotNull @MimeType String detectElse(
-            @NotNull IOSupplier<InputStream> stream,
-            @NotNull @MimeType String fallback
-    ) {
-        try (InputStream is = stream.execute()) {
-            String detected = detect(is);
-            if (detected != null) return detected;
-        } catch (IOException ignored) { }
-        return fallback;
     }
 
     //
